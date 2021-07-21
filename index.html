@@ -6,14 +6,50 @@
 		<title>wasm-bindgen thing</title>
 <style>
 body {
-    display: flex;
     padding: 0px;
-    margin: 3px;
-    justify-content: center;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.mainRegion {
+    margin-left: auto;
+    margin-right: auto;
+
+    flex-shrink: 1;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(min(100vh, 100vw) - 12px);
+    max-width: 800px;
+
+    background-color: white;
+    box-shadow: 1px -2px 3px rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mainRegion .controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+
+    width: inherit;
+}
+
+.mainRegion .controls > * {
+    margin-left: 3px;
+    margin-right: 3px;
+    flex-shrink: 1;
+    flex-grow: 1;
 }
 
 canvas.mainDisplay {
-    height: calc(min(100vh, 100vw) - 12px);
+    flex-grow: 1;
+    flex-shrink: 1;
+
+    flex-basis: 80vh;
+    min-height: 0;
+
     aspect-ratio: 1;
 }
 </style>

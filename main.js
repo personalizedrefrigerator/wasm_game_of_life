@@ -183,9 +183,12 @@ async function run() {
             lastCellY = undefined;
             evt.preventDefault();
 
-            handlePtrEvent(evt);
+            if (evt.pointerType != "touch") {
+                handlePtrEvent(evt);
+            }
         } else {
             ptrDown = false;
+            return false;
         }
     });
     canvas.addEventListener("pointerup", (evt) => ptrDown = false);
