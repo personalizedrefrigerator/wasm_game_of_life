@@ -118,8 +118,8 @@ async function run() {
     };
 
     render = () => {
-        if (canvas.width != canvas.clientWidth || canvas.height != canvas.clientHeight) {
-            canvas.width = canvas.clientWidth;
+        if (canvas.height != canvas.clientHeight) {
+            canvas.width = canvas.clientHeight;
             canvas.height = canvas.clientHeight;
 
             updateSquareSize();
@@ -183,27 +183,24 @@ async function run() {
             lastCellY = undefined;
             evt.preventDefault();
 
-            canvas.style.touchAction = "none";
-
-            if (evt.pointerType != "touch") {
-                handlePtrEvent(evt);
-            }
-
             return true;
         } else {
             ptrDown = false;
-            canvas.style.touchAction = "auto";
 
             return false;
         }
-    });
+    }, false);
     canvas.addEventListener("pointerup", (evt) => {
-        ptrDown = false;
-        canvas.style.touchAction = "auto";
-    });
+        if (ptrDown) {
+            ptrDown = false;
+            evt.preventDefault();
+            handlePtrEvent(evt);
+
+            return true;
+        }
+    }, false);
     canvas.addEventListener("pointerleave", (evt) => {
         ptrDown = false;
-        canvas.style.touchAction = "auto";
     });
     canvas.addEventListener("pointermove", (evt) => {
         if (ptrDown) {
@@ -212,7 +209,7 @@ async function run() {
 
             return true;
         }
-    });
+    }, false);
 
     document.body.addEventListener("keydown", evt => {
         if (evt.key == "p") {
