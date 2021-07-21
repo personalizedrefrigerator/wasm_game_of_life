@@ -183,19 +183,34 @@ async function run() {
             lastCellY = undefined;
             evt.preventDefault();
 
+            canvas.style.touchAction = "none";
+
             if (evt.pointerType != "touch") {
                 handlePtrEvent(evt);
             }
+
+            return true;
         } else {
             ptrDown = false;
+            canvas.style.touchAction = "auto";
+
             return false;
         }
     });
-    canvas.addEventListener("pointerup", (evt) => ptrDown = false);
+    canvas.addEventListener("pointerup", (evt) => {
+        ptrDown = false;
+        canvas.style.touchAction = "auto";
+    });
+    canvas.addEventListener("pointerleave", (evt) => {
+        ptrDown = false;
+        canvas.style.touchAction = "auto";
+    });
     canvas.addEventListener("pointermove", (evt) => {
         if (ptrDown) {
             evt.preventDefault();
             handlePtrEvent(evt);
+
+            return true;
         }
     });
 
