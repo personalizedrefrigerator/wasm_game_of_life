@@ -1,4 +1,4 @@
-import init, { Cell, Universe } from './pkg/game_of_life.js'
+import init, { Cell, Color4, Universe } from './pkg/game_of_life.js'
 
 
 /// Initialize UI associated with this app. Returns:
@@ -42,7 +42,7 @@ function initUI(parent) {
                 labelElem.textContent = label;
 
                 const input = document.createElement("input");
-                input.type = type;
+                input.setAttribute('type', type);
                 input.setAttribute("placeholder", label);
 
                 labelElem.appendChild(input);
@@ -64,11 +64,13 @@ function initUI(parent) {
 async function run() {
     let running = true;
     let updateBtnText, updateSquareSize, mainloop, togglePaused, clearUniverse;
-    let playPauseButton;
+    let playPauseButton, fillRectCellsCB;
     let render;
     let updateRate = 1;
 
 	await init();
+
+    const CELL_COLOR = Color4.new(0, 0, 0, 255);
 
     let universe = Universe.new(64, 64);
     let uiData = initUI(document.body);
@@ -108,13 +110,22 @@ async function run() {
         input.max = 12;
     });
 
+    fillRectCellsCB = controls.addInput("Use fill_rect: ", "checkbox", (_) => {},
+        (input) => {
+            input.checked = false;
+        }
+    );
+
     updateBtnText = () => {
         playPauseButton.textContent = running ? "Pause" : "Play";
     };
 
     updateSquareSize = () => {
-        let square_size = Math.min(canvas.width, canvas.height)/Math.max(universe.width(), universe.height()) - universe.get_square_spacing();
-        universe.set_square_size(square_size);
+        const full_cell_size = Math.min(canvas.width, canvas.height)/Math.max(universe.width(), universe.height());
+        universe.set_square_spacing(full_cell_size > 2.0 ? 1.0 : 0.0);
+
+        const square_size = full_cell_size - universe.get_square_spacing();
+        universe.set_square_size(Math.ceil(square_size));
     };
 
     render = () => {
@@ -127,11 +138,13 @@ async function run() {
 
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
-        universe.fill_cells(Cell.Dead, ctx);
 
-        ctx.fillStyle = "black";
-        universe.fill_cells(Cell.Alive, ctx);
+        if (fillRectCellsCB.checked) {
+            ctx.fillStyle = "black";
+            universe.fill_cells(Cell.Dead, ctx);
+        } else {
+            universe.render_cells(Cell.Alive, CELL_COLOR, ctx);
+        }
     };
 
     clearUniverse = () => {
@@ -178,10 +191,10 @@ async function run() {
     let ptrDown = false;
     canvas.addEventListener("pointerdown", (evt) => {
         if (evt.isPrimary) {
+            evt.preventDefault();
             ptrDown = true;
             lastCellX = undefined;
             lastCellY = undefined;
-            evt.preventDefault();
 
             return true;
         } else {
@@ -192,8 +205,8 @@ async function run() {
     }, false);
     canvas.addEventListener("pointerup", (evt) => {
         if (ptrDown) {
-            ptrDown = false;
             evt.preventDefault();
+            ptrDown = false;
             handlePtrEvent(evt);
 
             return true;

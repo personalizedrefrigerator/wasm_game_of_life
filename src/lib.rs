@@ -1,12 +1,35 @@
 use wasm_bindgen::prelude::*;
 
-const DEFAULT_SQUARE_SIZE: f64 = 8.0;
-const DEFAULT_SPACING: f64 = 1.0;
+use web_sys::ImageData;
+use wasm_bindgen::Clamped;
+
+const DEFAULT_SQUARE_SIZE: u32 = 8;
+const DEFAULT_SPACING: u32 = 1;
 
 #[wasm_bindgen(start)]
 pub fn main() {
     // Better error logging:
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+}
+
+#[wasm_bindgen]
+pub struct Color4 {
+    red: u8,
+    green: u8,
+    blue: u8,
+    alpha: u8,
+}
+
+#[wasm_bindgen]
+impl Color4 {
+    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Color4 {
+        Color4 {
+            red: r,
+            green: g,
+            blue: b,
+            alpha: a,
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -25,8 +48,8 @@ pub struct Universe {
     width: u32,
     height: u32,
 
-    square_size_px: f64,
-    square_spacing_px: f64,
+    square_size_px: u32,
+    square_spacing_px: u32,
 }
 
 #[wasm_bindgen]
@@ -119,32 +142,74 @@ impl Universe {
         }
     }
 
-    pub fn fill_cells(&self, cell_type: Cell, ctx: &web_sys::CanvasRenderingContext2d) {
+    /// Render cells, pixel-by-pixel
+    pub fn render_cells(&self, cell_type: Cell, color: &Color4, ctx: &web_sys::CanvasRenderingContext2d) {
+        let square_size = self.square_size_px + self.square_spacing_px;
+        let mut data: Vec<u8> = (0..(self.width * 4 * self.height * square_size * square_size)).map(|_| { 0 as u8 }).collect();
+
         for x in 0..self.width {
+            let square_x = x * square_size + self.square_spacing_px;
+
             for y in 0..self.height {
                 let cell = self.get_cell_at(x, y);
 
-                if cell == cell_type {
+                if cell != cell_type {
                     continue;
                 }
 
-                let square_x = (x as f64) * (self.square_size_px + self.square_spacing_px) + self.square_spacing_px;
-                let square_y = (y as f64) * (self.square_size_px + self.square_spacing_px) + self.square_spacing_px;
+                let square_y = y * square_size + self.square_spacing_px;
 
-                ctx.fill_rect(square_x, square_y, self.square_size_px, self.square_size_px);
+                for j in square_y..(square_y + self.square_size_px) {
+                    for i in square_x..(square_x + self.square_size_px) {
+                        let idx = ((j * self.width * square_size + i) as usize) * 4;
+
+                        data[idx] = color.red;
+                        data[idx + 1] = color.green;
+                        data[idx + 2] = color.blue;
+                        data[idx + 3] = color.alpha;
+                    }
+                }
+            }
+        }
+
+        let img_data = ImageData::new_with_u8_clamped_array(Clamped(&data[..]), self.width * square_size).unwrap();
+        ctx.put_image_data(&img_data, 0.0, 0.0).expect("Unable to write image data!");
+    }
+
+    /// Render cells using fill_rect
+    pub fn fill_cells(&self, cell_type: Cell, ctx: &web_sys::CanvasRenderingContext2d) {
+        let square_size = self.square_size_px + self.square_spacing_px;
+
+        for x in 0..self.width {
+            let square_x = x * square_size + self.square_spacing_px;
+
+            for y in 0..self.height {
+                let cell = self.get_cell_at(x, y);
+
+                if cell != cell_type {
+                    continue;
+                }
+
+                let square_y = y * square_size + self.square_spacing_px;
+
+                ctx.fill_rect(square_x.into(), square_y.into(), square_size.into(), square_size.into());
             }
         }
     }
 
-    pub fn set_square_size(&mut self, size: f64) {
+    pub fn set_square_size(&mut self, size: u32) {
         self.square_size_px = size;
+    }
+
+    pub fn set_square_spacing(&mut self, spacing: u32) {
+        self.square_spacing_px = spacing;
     }
 
     pub fn width(&self) -> u32 { self.width }
     pub fn height(&self) -> u32 { self.height }
 
-    pub fn get_square_size(&self) -> f64 { self.square_size_px }
-    pub fn get_square_spacing(&self) -> f64 { self.square_spacing_px }
+    pub fn get_square_size(&self) -> u32 { self.square_size_px }
+    pub fn get_square_spacing(&self) -> u32 { self.square_spacing_px }
 
     /// Create a new universe with initial data based on that in [template].
     pub fn resize_to(&mut self, width: u32, height: u32) {
