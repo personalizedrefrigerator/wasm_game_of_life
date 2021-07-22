@@ -192,7 +192,7 @@ impl Universe {
 
                 let square_y = y * square_size + self.square_spacing_px;
 
-                ctx.fill_rect(square_x.into(), square_y.into(), square_size.into(), square_size.into());
+                ctx.fill_rect(square_x.into(), square_y.into(), self.square_size_px.into(), self.square_size_px.into());
             }
         }
     }

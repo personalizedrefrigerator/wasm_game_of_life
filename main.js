@@ -110,7 +110,7 @@ async function run() {
         input.max = 12;
     });
 
-    fillRectCellsCB = controls.addInput("Use fill_rect: ", "checkbox", (_) => {},
+    fillRectCellsCB = controls.addInput("Use fill_rect: ", "checkbox", (_) => { render(); },
         (input) => {
             input.checked = false;
         }
